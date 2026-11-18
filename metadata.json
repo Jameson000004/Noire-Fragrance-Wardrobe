@@ -1,0 +1,6 @@
+{
+  "name": "Noiré — Luxury Fragrance Wardrobe",
+  "description": "A bespoke personal fragrance wardrobe and recommendation engine matched to the weather, the hour, and your plans.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
