@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cloud, Clock, Calendar, SlidersHorizontal, ArrowRight, User, Check, Plus, Sparkles, Droplets } from 'lucide-react';
+import { Cloud, Clock, Calendar, SlidersHorizontal, ArrowRight, User, Check, Plus, Sparkles, Droplets, Mail } from 'lucide-react';
 import { Fragrance, Occasion, RecommendationResult, TimeOfDay, WeatherContext } from '../types/fragrance';
 import { INGREDIENTS_CATALOG } from '../data/mockIngredients';
 import { SoundService } from '../services/sound';
@@ -15,6 +15,7 @@ interface ScreenScentFinderProps {
   onOpenFilters: () => void;
   onOpenSettings: () => void;
   onOpenAuth: () => void;
+  onOpenGmail: () => void;
   onToggleOccasion: () => void;
   onToggleTime: () => void;
   onToggleWeather: () => void;
@@ -31,12 +32,13 @@ export const ScreenScentFinder: React.FC<ScreenScentFinderProps> = ({
   onOpenFilters,
   onOpenSettings,
   onOpenAuth,
+  onOpenGmail,
   onToggleOccasion,
   onToggleTime,
   onToggleWeather,
   onNavigateToShelf,
 }) => {
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser, userProfile, hasGmailAccess } = useAuth();
   const [activeSegment, setActiveSegment] = useState<'today' | 'shelf'>('today');
   const [selectedNoteLayer, setSelectedNoteLayer] = useState<'top' | 'heart' | 'base'>('heart');
   const [selectedIngredientIds, setSelectedIngredientIds] = useState<string[]>(['ing-rose', 'ing-amber']);
@@ -72,6 +74,20 @@ export const ScreenScentFinder: React.FC<ScreenScentFinderProps> = ({
       <header className="relative z-10 flex items-center justify-between mb-5">
         <h1 className="font-serif text-2xl text-[#F4E9E5] tracking-tight">Noiré</h1>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              SoundService.playTap();
+              onOpenGmail();
+            }}
+            aria-label="Open Atelier Mail (Gmail)"
+            className="relative w-10 h-10 rounded-full glass-control flex items-center justify-center text-[#F4E9E5] hover:border-[#D8A6AC]/60 transition-colors cursor-pointer"
+          >
+            <Mail className="w-4 h-4 text-[#F4E9E5]" strokeWidth={1.75} />
+            {hasGmailAccess && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#D8A6AC] ring-1 ring-[#10090B]" />
+            )}
+          </button>
+
           <button
             onClick={onOpenFilters}
             aria-label="Filter recommendations"

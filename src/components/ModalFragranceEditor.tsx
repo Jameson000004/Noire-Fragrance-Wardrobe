@@ -4,7 +4,7 @@ import { Fragrance, FragranceConcentration, Occasion, Season, Sillage, Temperatu
 import { SoundService } from '../services/sound';
 
 interface ModalFragranceEditorProps {
-  initialFragrance?: Fragrance | null;
+  initialFragrance?: Partial<Fragrance> | null;
   onSave: (fragrance: Fragrance) => void;
   onClose: () => void;
 }
@@ -23,7 +23,7 @@ export const ModalFragranceEditor: React.FC<ModalFragranceEditorProps> = ({
   onSave,
   onClose,
 }) => {
-  const isEditing = Boolean(initialFragrance);
+  const isEditing = Boolean(initialFragrance?.id);
 
   const [name, setName] = useState(initialFragrance?.name || '');
   const [brand, setBrand] = useState(initialFragrance?.brand || 'Noiré Parfums');
@@ -42,28 +42,28 @@ export const ModalFragranceEditor: React.FC<ModalFragranceEditorProps> = ({
 
   // Selected tags
   const [selectedOccasions, setSelectedOccasions] = useState<Occasion[]>(
-    initialFragrance?.tags.occasions || ['Evening', 'Date Night']
+    initialFragrance?.tags?.occasions || ['Evening', 'Date Night']
   );
   const [selectedTimes, setSelectedTimes] = useState<TimeOfDay[]>(
-    initialFragrance?.tags.timeOfDay || ['Evening']
+    initialFragrance?.tags?.timeOfDay || ['Evening']
   );
   const [selectedSeasons, setSelectedSeasons] = useState<Season[]>(
-    initialFragrance?.tags.seasons || ['Fall / Winter']
+    initialFragrance?.tags?.seasons || ['Fall / Winter']
   );
   const [tempSuitability, setTempSuitability] = useState<TemperatureSuitability>(
-    initialFragrance?.tags.temperatureSuitability || 'Below 15°C'
+    initialFragrance?.tags?.temperatureSuitability || 'Below 15°C'
   );
-  const [sillage, setSillage] = useState<Sillage>(initialFragrance?.tags.sillage || "Arm's length");
+  const [sillage, setSillage] = useState<Sillage>(initialFragrance?.tags?.sillage || "Arm's length");
 
   // Notes state
   const [topNotes, setTopNotes] = useState<string[]>(
-    initialFragrance?.notes.top.map((n) => n.name) || ['Calabrian Bergamot', 'Pink Pepper']
+    initialFragrance?.notes?.top?.map((n) => n.name) || ['Calabrian Bergamot', 'Pink Pepper']
   );
   const [heartNotes, setHeartNotes] = useState<string[]>(
-    initialFragrance?.notes.heart.map((n) => n.name) || ['Velvet Rose', 'Iris Florentina']
+    initialFragrance?.notes?.heart?.map((n) => n.name) || ['Velvet Rose', 'Iris Florentina']
   );
   const [baseNotes, setBaseNotes] = useState<string[]>(
-    initialFragrance?.notes.base.map((n) => n.name) || ['Dark Ebony Wood', 'Warm Amber Resin']
+    initialFragrance?.notes?.base?.map((n) => n.name) || ['Dark Ebony Wood', 'Warm Amber Resin']
   );
 
   const [newTopNote, setNewTopNote] = useState('');

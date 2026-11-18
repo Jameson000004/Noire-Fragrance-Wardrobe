@@ -10,6 +10,7 @@ import {
   Sun,
   Flame,
   Check,
+  Mail,
 } from 'lucide-react';
 import { Fragrance } from '../types/fragrance';
 import { SoundService } from '../services/sound';
@@ -20,6 +21,7 @@ interface ScreenBottleDetailProps {
   onWearToday: (fragrance: Fragrance) => void;
   onToggleFavorite: (id: string) => void;
   onEditFragrance?: (fragrance: Fragrance) => void;
+  onEmailFragrance?: (fragrance: Fragrance) => void;
 }
 
 export const ScreenBottleDetail: React.FC<ScreenBottleDetailProps> = ({
@@ -28,6 +30,7 @@ export const ScreenBottleDetail: React.FC<ScreenBottleDetailProps> = ({
   onWearToday,
   onToggleFavorite,
   onEditFragrance,
+  onEmailFragrance,
 }) => {
   const [justWorn, setJustWorn] = useState(false);
   const [showShareToast, setShowShareToast] = useState(false);
@@ -89,6 +92,18 @@ export const ScreenBottleDetail: React.FC<ScreenBottleDetailProps> = ({
         </button>
 
         <div className="flex items-center gap-2">
+          {onEmailFragrance && (
+            <button
+              onClick={() => {
+                SoundService.playTap();
+                onEmailFragrance(fragrance);
+              }}
+              aria-label="Send fragrance note via Gmail"
+              className="w-11 h-11 rounded-full glass-control flex items-center justify-center text-[#F4E9E5] hover:border-[#D8A6AC] transition-all cursor-pointer active:scale-95"
+            >
+              <Mail className="w-4 h-4" strokeWidth={1.75} />
+            </button>
+          )}
           <button
             onClick={handleShare}
             aria-label="Share fragrance summary"

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   auth,
   googleProvider,
+  GoogleAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -15,6 +16,14 @@ import {
   setDoc,
 } from './firebase';
 
+// Strict in-memory cache for Google Workspace OAuth access token (never stored in localStorage/sessionStorage)
+let cachedAccessToken: string | null = null;
+let isSigningIn = false;
+
+export const getAccessToken = (): string | null => {
+  return cachedAccessToken;
+};
+
 interface UserProfile {
   uid: string;
   email: string | null;
@@ -27,11 +36,14 @@ interface AuthContextType {
   currentUser: User | null;
   userProfile: UserProfile | null;
   isLoading: boolean;
-  signInWithGoogle: () => Promise<void>;
+  gmailAccessToken: string | null;
+  hasGmailAccess: boolean;
+  signInWithGoogle: () => Promise<string | null>;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string, name?: string) => Promise<void>;
   signInAsGuest: () => Promise<void>;
   logout: () => Promise<void>;
+  invalidateGmailToken: () => void;
   authError: string | null;
   clearError: () => void;
 }
@@ -42,6 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [gmailAccessToken, setGmailAccessToken] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
 
   // Sync user profile with Firestore
@@ -53,7 +66,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const profileData: UserProfile = {
         uid: user.uid,
         email: user.email,
-        displayName: user.displayName || (user.isAnonymous ? 'Guest Explorer' : user.email?.split('@')[0] || 'Connoisseur'),
+        displayName:
+          user.displayName ||
+          (user.isAnonymous ? 'Guest Explorer' : user.email?.split('@')[0] || 'Connoisseur'),
         photoURL: user.photoURL,
         isAnonymous: user.isAnonymous,
       };
@@ -73,7 +88,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserProfile(profileData);
     } catch (err) {
       console.warn('Could not sync profile with Firestore:', err);
-      // Fallback to local profile
       setUserProfile({
         uid: user.uid,
         email: user.email,
@@ -88,8 +102,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
+        if (cachedAccessToken) {
+          setGmailAccessToken(cachedAccessToken);
+        } else if (!isSigningIn) {
+          cachedAccessToken = null;
+          setGmailAccessToken(null);
+        }
         await syncUserProfile(user);
       } else {
+        cachedAccessToken = null;
+        setGmailAccessToken(null);
         setUserProfile(null);
       }
       setIsLoading(false);
@@ -98,14 +120,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (): Promise<string | null> => {
     try {
       setAuthError(null);
-      await signInWithPopup(auth, googleProvider);
+      isSigningIn = true;
+      const result = await signInWithPopup(auth, googleProvider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (!credential?.accessToken) {
+        throw new Error('Failed to obtain Google Workspace access token.');
+      }
+      cachedAccessToken = credential.accessToken;
+      setGmailAccessToken(cachedAccessToken);
+      return cachedAccessToken;
     } catch (err: any) {
       console.error('Google Sign-In Error:', err);
       setAuthError(err.message || 'Failed to authenticate with Google.');
       throw err;
+    } finally {
+      isSigningIn = false;
     }
   };
 
@@ -156,11 +188,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setAuthError(null);
+      cachedAccessToken = null;
+      setGmailAccessToken(null);
       await signOut(auth);
     } catch (err: any) {
       console.error('Logout Error:', err);
       setAuthError(err.message || 'Logout failed.');
     }
+  };
+
+  const invalidateGmailToken = () => {
+    cachedAccessToken = null;
+    setGmailAccessToken(null);
   };
 
   const clearError = () => setAuthError(null);
@@ -171,11 +210,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentUser,
         userProfile,
         isLoading,
+        gmailAccessToken,
+        hasGmailAccess: Boolean(gmailAccessToken),
         signInWithGoogle,
         signInWithEmail,
         signUpWithEmail,
         signInAsGuest,
         logout,
+        invalidateGmailToken,
         authError,
         clearError,
       }}

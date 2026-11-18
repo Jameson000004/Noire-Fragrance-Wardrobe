@@ -24,17 +24,42 @@ import {
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-// Initialize Firebase App
+// Configured Google Workspace OAuth scopes for Gmail integration
+export const SCOPES = [
+  'https://mail.google.com/',
+  'https://www.googleapis.com/auth/gmail.addons.current.action.compose',
+  'https://www.googleapis.com/auth/gmail.addons.current.message.action',
+  'https://www.googleapis.com/auth/gmail.addons.current.message.metadata',
+  'https://www.googleapis.com/auth/gmail.addons.current.message.readonly',
+  'https://www.googleapis.com/auth/gmail.compose',
+  'https://www.googleapis.com/auth/gmail.insert',
+  'https://www.googleapis.com/auth/gmail.labels',
+  'https://www.googleapis.com/auth/gmail.metadata',
+  'https://www.googleapis.com/auth/gmail.modify',
+  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/gmail.send',
+  'https://www.googleapis.com/auth/gmail.settings.basic',
+  'https://www.googleapis.com/auth/gmail.settings.sharing',
+] as const;
+
+// Initialize Firebase App (reuse existing instance if already initialized)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 // Initialize Auth
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+SCOPES.forEach((scope) => {
+  googleProvider.addScope(scope);
+});
+googleProvider.setCustomParameters({
+  prompt: 'select_account',
+});
 
 // Initialize Firestore (using specific databaseId if specified)
-export const db = firebaseConfig.firestoreDatabaseId
-  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
-  : getFirestore(app);
+const typedConfig = firebaseConfig as typeof firebaseConfig & { firestoreDatabaseId?: string };
+const firestoreDatabaseId =
+  typedConfig.firestoreDatabaseId || 'ai-studio-noirluxuryfragra-4e6aa805-1c79-4570-93b7-a163cbd77d09';
+export const db = getFirestore(app, firestoreDatabaseId);
 
 // Connection verification
 async function verifyFirestoreConnection() {
@@ -49,6 +74,7 @@ async function verifyFirestoreConnection() {
 verifyFirestoreConnection();
 
 export {
+  GoogleAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,

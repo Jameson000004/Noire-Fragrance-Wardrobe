@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Cloud, Volume2, VolumeX, RotateCcw, Clock, ShieldCheck, Sun, Droplets } from 'lucide-react';
+import { X, Cloud, Volume2, VolumeX, RotateCcw, Clock, ShieldCheck, Mail } from 'lucide-react';
 import { UserPreferences, WearLog, WeatherContext } from '../types/fragrance';
 import { SoundService } from '../services/sound';
 
@@ -13,6 +13,7 @@ interface ModalSettingsProps {
   onSaveWeather: (weather: WeatherContext) => void;
   onResetAllData: () => void;
   onOpenAuth: () => void;
+  onOpenGmail: () => void;
   onClose: () => void;
 }
 
@@ -24,9 +25,10 @@ export const ModalSettings: React.FC<ModalSettingsProps> = ({
   onSaveWeather,
   onResetAllData,
   onOpenAuth,
+  onOpenGmail,
   onClose,
 }) => {
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser, userProfile, hasGmailAccess } = useAuth();
   const [tempC, setTempC] = useState(weather.temperatureC);
   const [condition, setCondition] = useState(weather.condition);
   const [unit, setUnit] = useState<'C' | 'F'>(preferences.temperatureUnit);
@@ -101,6 +103,31 @@ export const ModalSettings: React.FC<ModalSettingsProps> = ({
               className="py-1.5 px-3 rounded-full bg-[#F4E9E5] text-[#10090B] font-semibold text-xs hover:bg-white transition-all cursor-pointer shadow-sm"
             >
               {currentUser && !currentUser.isAnonymous ? 'Manage' : 'Sign In'}
+            </button>
+          </div>
+
+          {/* Gmail Workspace Card */}
+          <div className="p-4 rounded-2xl glass-card border border-[rgba(244,233,229,0.14)] flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#D8A6AC] uppercase tracking-wider mb-1">
+                <Mail className="w-3.5 h-3.5" />
+                <span>Atelier Mail (Gmail)</span>
+              </div>
+              <p className="text-xs text-[#F4E9E5] font-medium">
+                {hasGmailAccess ? 'Connected in Session' : 'Connect Google Account'}
+              </p>
+              <p className="text-[10px] text-[#C8B7B9]">
+                Import fragrance receipts & share scent notes
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                SoundService.playTap();
+                onOpenGmail();
+              }}
+              className="py-1.5 px-3 rounded-full glass-control text-[#F4E9E5] font-semibold text-xs hover:border-[#D8A6AC] transition-all cursor-pointer"
+            >
+              Open
             </button>
           </div>
 

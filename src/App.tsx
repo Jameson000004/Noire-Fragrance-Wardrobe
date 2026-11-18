@@ -12,11 +12,12 @@ import { ModalFragranceEditor } from './components/ModalFragranceEditor';
 import { ModalFilters } from './components/ModalFilters';
 import { ModalSettings } from './components/ModalSettings';
 import { ModalAuth } from './components/ModalAuth';
+import { ModalGmail } from './components/ModalGmail';
 import { SoundService } from './services/sound';
 import { AuthProvider, useAuth } from './services/authContext';
 
 function MainApp() {
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser } = useAuth();
 
   const [fragrances, setFragrances] = useState<Fragrance[]>([]);
   const [preferences, setPreferences] = useState<UserPreferences>(StorageService.getPreferences());
@@ -28,8 +29,11 @@ function MainApp() {
   const [currentTimeOfDay, setCurrentTimeOfDay] = useState<TimeOfDay>('Evening');
 
   const [selectedFragrance, setSelectedFragrance] = useState<Fragrance | null>(null);
-  const [activeModal, setActiveModal] = useState<'none' | 'filters' | 'settings' | 'fragranceEditor' | 'auth'>('none');
-  const [editingFragrance, setEditingFragrance] = useState<Fragrance | null>(null);
+  const [activeModal, setActiveModal] = useState<
+    'none' | 'filters' | 'settings' | 'fragranceEditor' | 'auth' | 'gmail'
+  >('none');
+  const [editingFragrance, setEditingFragrance] = useState<Partial<Fragrance> | null>(null);
+  const [gmailComposeFragrance, setGmailComposeFragrance] = useState<Fragrance | null>(null);
 
   const [isWelcomeActive, setIsWelcomeActive] = useState<boolean>(true);
 
@@ -216,6 +220,10 @@ function MainApp() {
               setEditingFragrance(f);
               setActiveModal('fragranceEditor');
             }}
+            onEmailFragrance={(f) => {
+              setGmailComposeFragrance(f);
+              setActiveModal('gmail');
+            }}
           />
         ) : (
           /* Main Tab Destinations */
@@ -232,6 +240,10 @@ function MainApp() {
                 onOpenFilters={() => setActiveModal('filters')}
                 onOpenSettings={() => setActiveModal('settings')}
                 onOpenAuth={() => setActiveModal('auth')}
+                onOpenGmail={() => {
+                  setGmailComposeFragrance(null);
+                  setActiveModal('gmail');
+                }}
                 onToggleOccasion={handleToggleOccasion}
                 onToggleTime={handleToggleTime}
                 onToggleWeather={handleToggleWeather}
@@ -300,6 +312,22 @@ function MainApp() {
           />
         )}
 
+        {/* Modal: Gmail Atelier Mail */}
+        {activeModal === 'gmail' && (
+          <ModalGmail
+            fragrances={fragrances}
+            initialComposeFragrance={gmailComposeFragrance}
+            onImportFragrance={(draft) => {
+              setEditingFragrance(draft);
+              setActiveModal('fragranceEditor');
+            }}
+            onClose={() => {
+              setActiveModal('none');
+              setGmailComposeFragrance(null);
+            }}
+          />
+        )}
+
         {/* Modal: Settings, Weather Simulation & Wear Log */}
         {activeModal === 'settings' && (
           <ModalSettings
@@ -316,6 +344,10 @@ function MainApp() {
             }}
             onResetAllData={handleResetAllData}
             onOpenAuth={() => setActiveModal('auth')}
+            onOpenGmail={() => {
+              setGmailComposeFragrance(null);
+              setActiveModal('gmail');
+            }}
             onClose={() => setActiveModal('none')}
           />
         )}
